@@ -1,6 +1,15 @@
 #include <iostream>
 #include <string>
+#include <iomanip> // For setw and left
 using namespace std;
+
+// ANSI escape codes for terminal colors
+#define RESET   "\033[0m"
+#define BOLD    "\033[1m"
+#define GREEN   "\033[32m"
+#define CYAN    "\033[36m"
+#define MAGENTA "\033[35m"
+#define YELLOW  "\033[33m"
 
 // Forward declaration of StudData class
 class StudData;
@@ -10,21 +19,14 @@ class Student {
     string name;
     int roll_no;
     string cls;
-    string division;  // Changed to std::string
+    string division;
     string dob;
-    string bloodgroup;  // Changed to std::string
-    static int count;  // Static member variable to count number of students
+    string bloodgroup;
+    static int count;
 
 public:
     // Default Constructor
-    Student() {
-        name = "";
-        roll_no = 0;
-        cls = "";
-        division = "";  // No dynamic allocation needed
-        dob = "dd/mm/yyyy";
-        bloodgroup = "";  // No dynamic allocation needed
-    }
+    Student() : name(""), roll_no(0), cls(""), division(""), dob("dd/mm/yyyy"), bloodgroup("") {}
 
     // Destructor
     ~Student() {}
@@ -39,6 +41,14 @@ public:
 
     // Member function to display data of a student
     void dispData(StudData*) const;
+
+    // Accessor methods
+    string getName() const { return name; }
+    int getRollNo() const { return roll_no; }
+    string getClass() const { return cls; }
+    string getDivision() const { return division; }
+    string getDob() const { return dob; }
+    string getBloodGroup() const { return bloodgroup; }
 };
 
 // Definition of static member variable count
@@ -47,9 +57,9 @@ int Student::count = 0;
 // StudData class declaration
 class StudData {
     string caddress;
-    long telno;  // Changed to long
-    long dlno;   // Changed to long
-    friend class Student;  // Student class is a friend of StudData
+    long telno;
+    long dlno;
+    friend class Student;  // Allow Student to access private members
 
 public:
     // Constructor
@@ -71,9 +81,7 @@ public:
 
     // Function to display student data related to address, telephone, and driving license
     void dispStudData() const {
-        cout << "Contact Address: " << caddress << endl;
-        cout << "Telephone Number: " << telno << endl;
-        cout << "Driving License Number: " << dlno << endl;
+        // This function is not used in the main function but could be implemented for completeness
     }
 };
 
@@ -97,15 +105,18 @@ inline void Student::getData(StudData* st) {
     count++;  // Incrementing count of students
 }
 
-// Inline function to display student data
-inline void Student::dispData(StudData* st) const {
-    cout << "Student Name: " << name << endl;
-    cout << "Roll Number: " << roll_no << endl;
-    cout << "Class: " << cls << endl;
-    cout << "Division: " << division << endl;
-    cout << "Date of Birth: " << dob << endl;
-    cout << "Blood Group: " << bloodgroup << endl;
-    st->dispStudData();  // Displaying additional data using StudData object
+// Function to display student data
+void Student::dispData(StudData* st) const {
+    cout << "| " << setw(17) << left << name
+         << "| " << setw(7)  << left << roll_no
+         << "| " << setw(5)  << left << cls
+         << "| " << setw(9)  << left << division
+         << "| " << setw(10) << left << dob
+         << "| " << setw(11) << left << bloodgroup
+         << "| " << setw(17) << left << st->caddress
+         << "| " << setw(12) << left << st->telno
+         << "| " << setw(11) << left << st->dlno
+         << "|" << endl;
 }
 
 // Main function
@@ -126,16 +137,30 @@ int main() {
         cin.ignore();  // Clear newline left in the buffer
     } while (ch == 'y' || ch == 'Y');
 
-    // Loop to display student data
+    // Print table header
+    cout << GREEN << "---------------------------------------------------------------" << RESET << endl;
+    cout << GREEN << "| " << CYAN << setw(17) << left << "Name" << RESET
+         << "| " << CYAN << setw(7)  << left << "Roll No" << RESET
+         << "| " << CYAN << setw(5)  << left << "Class" << RESET
+         << "| " << CYAN << setw(9)  << left << "Division" << RESET
+         << "| " << CYAN << setw(10) << left << "DOB" << RESET
+         << "| " << CYAN << setw(11) << left << "Blood Group" << RESET
+         << "| " << CYAN << setw(17) << left << "Address" << RESET
+         << "| " << CYAN << setw(12) << left << "Tel No" << RESET
+         << "| " << CYAN << setw(11) << left << "DL No" << RESET
+         << "|" << endl;
+    cout << GREEN << "---------------------------------------------------------------" << RESET << endl;
+
+    // Loop to display student data in tabular form
     for (int i = 0; i < n; i++) {
-        cout << "---------------------------------------------------------------" << endl;
         stud1[i]->dispData(stud2[i]);  // Displaying data for each Student object
     }
 
-    // Displaying total number of students
-    cout << "---------------------------------------------------------------" << endl;
-    cout << "Total Students: " << Student::getCount() << endl;
-    cout << "---------------------------------------------------------------" << endl;
+    // Print table footer
+    cout << GREEN << "---------------------------------------------------------------" << RESET << endl;
+
+    // Display total number of students
+    cout << MAGENTA << "Total Students: " << RESET << Student::getCount() << endl;
 
     // Deleting allocated memory for objects
     for (int i = 0; i < n; i++) {

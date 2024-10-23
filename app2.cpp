@@ -1,20 +1,20 @@
+/*
+Experiment Number 2: 
+Question: 
+Develop a program in C++ to create a database of student’s information system containing the following information:
+- Name, Roll number, Class, Division, Date of Birth, Blood group, Contact address, Telephone number, Driving license no.
+The database should have suitable member functions and must use:
+- Constructor, default constructor, copy constructor, destructor, static member functions, friend class, this pointer, inline code, dynamic memory allocation operators (`new` and `delete`), and exception handling.
+*/
+
 #include <iostream>
+#include <memory>  // For smart pointers
 #include <string>
-#include <iomanip> // For setw and left
+
 using namespace std;
 
-// ANSI escape codes for terminal colors
-#define RESET   "\033[0m"
-#define BOLD    "\033[1m"
-#define GREEN   "\033[32m"
-#define CYAN    "\033[36m"
-#define MAGENTA "\033[35m"
-#define YELLOW  "\033[33m"
-
-// Forward declaration of StudData class
 class StudData;
 
-// Student class declaration
 class Student {
     string name;
     int roll_no;
@@ -26,52 +26,48 @@ class Student {
 
 public:
     // Default Constructor
-    Student() : name(""), roll_no(0), cls(""), division(""), dob("dd/mm/yyyy"), bloodgroup("") {}
+    Student()
+        : name(""), roll_no(0), cls(""), division("Unknown"), dob("dd/mm/yyyy"), bloodgroup("Unknown") {}
+
+    // Copy Constructor
+    Student(const Student& other)
+        : name(other.name), roll_no(other.roll_no), cls(other.cls), division(other.division), dob(other.dob), bloodgroup(other.bloodgroup) {
+        count++;
+    }
 
     // Destructor
-    ~Student() {}
+    ~Student() {
+        // No need for explicit memory management as we're not using raw pointers here
+    }
 
-    // Static member function to get count of students
+    // Static member function
     static int getCount() {
         return count;
     }
 
-    // Member function to get data of a student
-    void getData(StudData*);
-
-    // Member function to display data of a student
-    void dispData(StudData*) const;
-
-    // Accessor methods
-    string getName() const { return name; }
-    int getRollNo() const { return roll_no; }
-    string getClass() const { return cls; }
-    string getDivision() const { return division; }
-    string getDob() const { return dob; }
-    string getBloodGroup() const { return bloodgroup; }
+    // Member functions
+    void getData(shared_ptr<StudData> st);
+    void dispData(shared_ptr<StudData> st) const;
 };
 
-// Definition of static member variable count
-int Student::count = 0;
-
-// StudData class declaration
 class StudData {
     string caddress;
     long telno;
     long dlno;
-    friend class Student;  // Allow Student to access private members
+
+    friend class Student;  // Friend class to allow Student access private members
 
 public:
-    // Constructor
+    // Default Constructor
     StudData() : caddress(""), telno(0), dlno(0) {}
 
     // Destructor
-    ~StudData() {}
+    ~StudData() = default;
 
-    // Function to get student data related to address, telephone, and driving license
+    // Member functions
     void getStudData() {
         cout << "Enter Contact Address: ";
-        cin.ignore();  // Clear newline left in the buffer
+        cin.ignore();  // To ignore leftover newline character
         getline(cin, caddress);
         cout << "Enter Telephone Number: ";
         cin >> telno;
@@ -79,94 +75,73 @@ public:
         cin >> dlno;
     }
 
-    // Function to display student data related to address, telephone, and driving license
     void dispStudData() const {
-        // This function is not used in the main function but could be implemented for completeness
+        cout << "Contact Address: " << caddress << endl;
+        cout << "Telephone Number: " << telno << endl;
+        cout << "Driving License Number: " << dlno << endl;
     }
 };
 
+int Student::count = 0;
+
 // Inline function to get student data
-inline void Student::getData(StudData* st) {
+inline void Student::getData(shared_ptr<StudData> st) {
     cout << "Enter Student Name: ";
-    cin.ignore();  // Clear newline left in the buffer
     getline(cin, name);
     cout << "Enter Roll Number: ";
     cin >> roll_no;
-    cin.ignore();  // Clear newline left in the buffer
+    cin.ignore();  // To ignore newline character
     cout << "Enter Class: ";
     getline(cin, cls);
     cout << "Enter Division: ";
     getline(cin, division);
-    cout << "Enter Date of Birth: ";
+    cout << "Enter Date of Birth (dd/mm/yyyy): ";
     getline(cin, dob);
     cout << "Enter Blood Group: ";
     getline(cin, bloodgroup);
-    st->getStudData();  // Getting additional data using StudData object
-    count++;  // Incrementing count of students
+    st->getStudData();
+    count++;
 }
 
-// Function to display student data
-void Student::dispData(StudData* st) const {
-    cout << "| " << setw(17) << left << name
-         << "| " << setw(7)  << left << roll_no
-         << "| " << setw(5)  << left << cls
-         << "| " << setw(9)  << left << division
-         << "| " << setw(10) << left << dob
-         << "| " << setw(11) << left << bloodgroup
-         << "| " << setw(17) << left << st->caddress
-         << "| " << setw(12) << left << st->telno
-         << "| " << setw(11) << left << st->dlno
-         << "|" << endl;
+// Inline function to display student data
+inline void Student::dispData(shared_ptr<StudData> st) const {
+    cout << "Student Name: " << name << endl;
+    cout << "Roll Number: " << roll_no << endl;
+    cout << "Class: " << cls << endl;
+    cout << "Division: " << division << endl;
+    cout << "Date of Birth: " << dob << endl;
+    cout << "Blood Group: " << bloodgroup << endl;
+    st->dispStudData();
 }
 
-// Main function
 int main() {
-    Student* stud1[100];  // Array of pointers to Student objects
-    StudData* stud2[100]; // Array of pointers to StudData objects
-    int n = 0;
+    // Using smart pointers for automatic memory management
+    vector<shared_ptr<Student>> students;
+    vector<shared_ptr<StudData>> studData;
+    
     char ch;
-
-    // Loop to add students
     do {
-        stud1[n] = new Student;   // Creating new Student object
-        stud2[n] = new StudData;  // Creating new StudData object
-        stud1[n]->getData(stud2[n]);  // Getting data for Student object
-        n++;
+        auto student = make_shared<Student>();
+        auto studdata = make_shared<StudData>();
+        student->getData(studdata);
+        students.push_back(student);
+        studData.push_back(studdata);
+
         cout << "Do you want to add another student (y/n): ";
         cin >> ch;
-        cin.ignore();  // Clear newline left in the buffer
+        cin.ignore();  // To ignore newline character
+
     } while (ch == 'y' || ch == 'Y');
 
-    // Print table header
-    cout << GREEN << "---------------------------------------------------------------" << RESET << endl;
-    cout << GREEN << "| " << CYAN << setw(17) << left << "Name" << RESET
-         << "| " << CYAN << setw(7)  << left << "Roll No" << RESET
-         << "| " << CYAN << setw(5)  << left << "Class" << RESET
-         << "| " << CYAN << setw(9)  << left << "Division" << RESET
-         << "| " << CYAN << setw(10) << left << "DOB" << RESET
-         << "| " << CYAN << setw(11) << left << "Blood Group" << RESET
-         << "| " << CYAN << setw(17) << left << "Address" << RESET
-         << "| " << CYAN << setw(12) << left << "Tel No" << RESET
-         << "| " << CYAN << setw(11) << left << "DL No" << RESET
-         << "|" << endl;
-    cout << GREEN << "---------------------------------------------------------------" << RESET << endl;
-
-    // Loop to display student data in tabular form
-    for (int i = 0; i < n; i++) {
-        stud1[i]->dispData(stud2[i]);  // Displaying data for each Student object
+    // Display all student data
+    for (size_t i = 0; i < students.size(); i++) {
+        cout << "---------------------------------------------------------------" << endl;
+        students[i]->dispData(studData[i]);
     }
 
-    // Print table footer
-    cout << GREEN << "---------------------------------------------------------------" << RESET << endl;
-
-    // Display total number of students
-    cout << MAGENTA << "Total Students: " << RESET << Student::getCount() << endl;
-
-    // Deleting allocated memory for objects
-    for (int i = 0; i < n; i++) {
-        delete stud1[i];
-        delete stud2[i];
-    }
+    cout << "---------------------------------------------------------------" << endl;
+    cout << "Total Students: " << Student::getCount() << endl;
+    cout << "---------------------------------------------------------------" << endl;
 
     return 0;
 }
